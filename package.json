@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "API Backend for the image-server-REST project",
+  "main": "index.js",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "express-fileupload": "^1.1.6",
+    "express-jwt": "6.0.0",
+    "knex": "^0.20.13",
+    "lodash": "^4.17.19",
+    "mv": "^2.1.1",
+    "path": "^0.12.7",
+    "rootpath": "^0.1.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  },
+  "scripts": {
+    "test": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "author": "Yash Chaube <yashyc19@gmail.com>",
+  "license": "ISC"
+}
