@@ -25,3 +25,5 @@ uploaded/*
 
 # Confidentials
 users.json
+images.json
+latestImageId.txt

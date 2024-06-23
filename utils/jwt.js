@@ -10,7 +10,6 @@ function jwt() {
             // No auth required for these APIs
             '/login',
             '/register',
-            '/status',
             '/'
         ]
     });

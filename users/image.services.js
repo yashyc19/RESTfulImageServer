@@ -18,6 +18,15 @@ var ID = function () {
 const images = [{id: 0, image_name: 'test.png', user: 1, date: Date()}]
 
 async function getAll() {
+    // read images.json file
+    // return the data accordingly
+    // error handling if file doesn't exist
+    const imagesJsonPath = path.join(__dirname, '..', 'images.json');
+    if (!fs.existsSync(imagesJsonPath)) {
+        return [];
+    }
+    const images = JSON.parse(fs.readFileSync(imagesJsonPath, 'utf8'));
+
     return images.map(image => {
         // I don't want to expose the user email
         const { user , ...imageWihtoutEmail } = image
@@ -26,75 +35,117 @@ async function getAll() {
 }
 
 async function uploadImage(userId, files) {
-    let newFile = null
+    let newFile = null;
 
     if (!fs.existsSync(dir)){
-        console.log(dir + " doesn't exist, creating one.")
+        console.log(dir + " doesn't exist, creating one.");
         fs.mkdirSync(dir);
     }
 
     try {
         if (!files) {
-            return { status: 500, message: 'No file uploaded' }
+            return { status: 500, message: 'No file uploaded' };
         } else {
             newFile = files.image;
             const path = dir;
 
-            let data = await saveFile(userId, newFile.name, newFile.tempFilePath, path);
+            let data = await saveFile(newFile.name, newFile.tempFilePath, path, userId);
             return data;
         }
     } catch (err) {
-        console.log(err)
+        console.log(err);
         throw "Something went wrong";
     }
 }
 
-async function saveFile(userId, filename, oldPath, newPath) {
+async function saveFile(filename, oldPath, newPath, uploaderUserId) {
+    let creation_date = new Date();
+    let name = ID() + ' - ' + filename;
 
-    let creation_date = new Date()
-
-    let name = ID() + ' - ' + filename
-
-    let image_data = {
-        id: images.length,
-        user: userId,
-        image_name: name,
-        date: creation_date
+    // Step 1: Check for latestImageId.txt
+    const latestIdPath = path.join(__dirname, '..', 'latestImageId.txt');
+    if (!fs.existsSync(latestIdPath)) {
+        fs.writeFileSync(latestIdPath, '0');
     }
 
-    const moveItem = async () => {
-        await mv(oldPath, newPath + image_data.image_name)
-        images.push(image_data)
+    // Step 2: Determine the Next Image ID
+    let latestId = parseInt(fs.readFileSync(latestIdPath, 'utf8'), 10);
+    const imagesJsonPath = path.join(__dirname, '..', 'images.json');
+    if (fs.existsSync(imagesJsonPath)) {
+        const imagesData = JSON.parse(fs.readFileSync(imagesJsonPath, 'utf8'));
+        if (imagesData.length > 0) {
+            const maxId = imagesData.reduce((max, img) => Math.max(max, img.id), 0);
+            latestId = maxId + 1;
+        }
+    }
+
+    let image_data = {
+        id: latestId,
+        image_name: name,
+        date: creation_date,
+        uploaded_by: uploaderUserId
     };
 
-    return moveItem().then(() => { return image_data })
+    const moveItem = async () => {
+        await mv(oldPath, newPath + image_data.image_name);
+
+        // Initialize images.json if it doesn't exist
+        if (!fs.existsSync(imagesJsonPath)) {
+            fs.writeFileSync(imagesJsonPath, JSON.stringify([], null, 2));
+        }
+
+        // Read images.json
+        const imagesData = JSON.parse(fs.readFileSync(imagesJsonPath, 'utf8'));
+
+        // Append new image data
+        imagesData.push(image_data);
+
+        // Write back to images.json
+        fs.writeFileSync(imagesJsonPath, JSON.stringify(imagesData, null, 2), 'utf8');
+
+        // Step 4: Update latestImageId.txt
+        fs.writeFileSync(latestIdPath, latestId.toString());
+    };
+
+    return moveItem().then(() => { return image_data });
 }
 
 async function getImage(id) {
-    const image = images.find(image => image.id === id);
-    
-    if (image) {
-        return dir + image.image_name;
-    } else {
-        throw 'Image does not exist'
-    }
+    // read images.json file
+    // return the data accordingly
+    // error handling if file doesn't exist
+    const imagesJsonPath = path.join(__dirname, '..', 'images.json');
+    id = parseInt(id, 10);  // convert id to integer
 
+    if (!fs.existsSync(imagesJsonPath)) {
+        // return according error message if file doesn't exist
+        return { status: 404, message: 'No images found' };
+    }
+    // also check if the image exists
+    const images = JSON.parse(fs.readFileSync(imagesJsonPath, 'utf8'));
+    // filter images based on id
+    const image = images.find(image => image.id === id);
+    console.log(image);
+    if (!image) {
+        return { status: 404, message: 'No image found'};
+    }
+    return `./uploaded/${image.image_name}`;
 }
 
 async function getImagesOfUserWithId(userId) {
-    let id = parseInt(userId)
-    const user_images = images.filter(image => {
-        if (image.user == id) {
-            return image
-        }
-    })
+    // read images.json file
+    // return the data accordingly
+    // error handling if file doesn't exist
+    const imagesJsonPath = path.join(__dirname, '..', 'images.json');
+    userId = parseInt(userId, 10);  // convert userId to integer
 
-    console.log(user_images)
-
-    if (user_images.length != 0) {
-        return user_images
-    } else {
-        throw `No image of ${userId} were found`
+    if (!fs.existsSync(imagesJsonPath)) {
+        // return according error message if file doesn't exist
+        return { status: 404, message: 'No images found' };
     }
 
+    const images = JSON.parse(fs.readFileSync(imagesJsonPath, 'utf8'));
+    // filter images based on uploaded_by
+    const imagesOfUser = images.filter(image => image.uploaded_by === userId);
+    return imagesOfUser;
 }
