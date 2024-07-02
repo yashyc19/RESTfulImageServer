@@ -9,9 +9,20 @@ const app = express();
 
 const serverPort = process.env.PORT || 5000;
 
+// Define CORS options
+const corsOptions = {
+    origin: '*', // Allow all origins
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+};
+
 app.use(bodyParser.urlencoded({ extended: true })); // Parses the text as URL encoded data
 app.use(bodyParser.json()); // Parses the text as JSON
-app.use(cors());    // Enables all CORS requests
+
+// Apply CORS middleware with the defined options
+app.use(cors(corsOptions));
+
 app.use(fileupload({    // Enables file uploads
     useTempFiles : true,    // Uses the OS's temporary directory for storing files
     tempFileDir : './tmp/'  // Specifies the temporary directory
