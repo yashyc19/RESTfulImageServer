@@ -45,3 +45,8 @@ router.get('/users/:userId', function (req, res, next) {
 router.get('/', function (req, res) {
     res.status(200).send({ message: "Server is running"});
 })
+
+// API endpoint / that checks if user is still logged in
+router.get('/check', function (req, res) {
+    res.status(200).send({ message: "User is still logged in"});
+})

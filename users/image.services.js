@@ -15,7 +15,7 @@ var ID = function () {
     return '_' + Math.random().toString(36).substr(2, 9);
 };
 
-const images = [{id: 0, image_name: 'test.png', user: 1, date: Date()}]
+const images = []
 
 async function getAll() {
     // read images.json file
