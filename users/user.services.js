@@ -5,7 +5,7 @@ const fs = require('fs');
 let users;
 
 try {
-    const fileData = fs.readFileSync('users.json', 'utf8');
+    const fileData = fs.readFileSync('tmp/users.json', 'utf8');
     users = JSON.parse(fileData);
 } catch (error) {
     users = [{ id: 0, email: 'test', password: 'test', firstName: 'Test'}];
@@ -51,7 +51,7 @@ async function registerUser({ email, password }) {
     users.push(newUser);
 
     // Write users to file
-    fs.writeFileSync('users.json', JSON.stringify(users, null, 2));
+    fs.writeFileSync('tmp/users.json', JSON.stringify(users, null, 2));
 
     console.log(newUser)
 

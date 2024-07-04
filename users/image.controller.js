@@ -72,3 +72,20 @@ router.get("/:imageId", function (req, res, next) {
         })
         .catch(err => res.status(400).json({ message : err }));
 });
+
+// api endpoint to save the images that are selected by the user
+router.post("/save", function (req, res, next) {
+    const usertoken = req.headers.authorization;
+    const token = usertoken.split(' ');
+    jwt.verify(token[1], config.secret, (err, decoded) => {
+        if (err) return next(err); // Pass errors to the next middleware
+        console.log(decoded);
+        imgList = req.body;
+        imageService.saveImageList(imgList)
+            .then(data => res.json(data))
+            .catch(next); // Pass any errors to the next middleware
+        // imageService.saveImageList(decoded.sub, req.body)
+        //     .then(data => res.json(data))
+        //     .catch(next); // Pass any errors to the next middleware
+    });
+});
