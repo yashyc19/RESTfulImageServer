@@ -3,13 +3,13 @@ const fs = require('fs');
 const mv = promisify(fs.rename);
 const path = require('path')
 var dir = './uploaded/';
+const imagesJsonPath = path.join(__dirname, '..', 'tmp', 'images.json');
 
 module.exports = {
     uploadImage,
     getImage,
     getAll,
-    getImagesOfUserWithId,
-    saveImageList
+    getImagesOfUserWithId
 };
 
 var ID = function () {
@@ -22,12 +22,39 @@ async function getAll() {
     // read images.json file
     // return the data accordingly
     // error handling if file doesn't exist
-    const imagesJsonPath = path.join(__dirname, '..', 'tmp','images.json');
+    ;
     if (!fs.existsSync(imagesJsonPath)) {
         return [];
     }
     const images = JSON.parse(fs.readFileSync(imagesJsonPath, 'utf8'));
 
+    // add a functionality, before returning the images info
+    // check and compare the images names with the uploaded folder
+    // if the folder doesn't have the image, remove the image from the images.json file
+    // if the folder has the image, but the image is not in the images.json file, add the image to the images.json file
+    // make use of the saveFile function to save the image in the uploaded folder
+    // then proceed with the return operation
+    // this will ensure that the images.json file is always in sync with the uploaded folder
+    const imagesInFolder = fs.readdirSync(dir);
+    const imagesInJson = images.map(image => image.image_name);
+    const imagesToDelete = imagesInJson.filter(image => !imagesInFolder.includes(image));
+    const imagesToAdd = imagesInFolder.filter(image => !imagesInJson.includes(image));
+    // console.log(`infolder ${imagesInFolder} \ninjson ${imagesInJson} \ntodelete ${imagesToDelete} \ntoadd ${imagesToAdd}`);
+    imagesToDelete.forEach(image => {
+        const index = images.findIndex(img => img.image_name === image);
+        images.splice(index, 1);
+    }); // remove images that are not in the folder
+    imagesToAdd.forEach(image => {
+        const image_data = {
+            id: ID(),
+            image_name: image,
+            date: new Date(),
+            uploaded_by: 0
+        };
+        images.push(image_data);
+    }); // add images that are not in the json file
+    fs.writeFileSync(imagesJsonPath, JSON.stringify(images, null, 2), 'utf8');  // write the updated images.json file
+    
     return images.map(image => {
         // I don't want to expose the user email
         const { user , ...imageWihtoutEmail } = image
@@ -61,27 +88,11 @@ async function uploadImage(userId, files) {
 
 async function saveFile(filename, oldPath, newPath, uploaderUserId) {
     let creation_date = new Date();
-    let name = ID() + ' - ' + filename;
+    let name = filename;
 
-    // Step 1: Check for latestImageId.txt
-    const latestIdPath = path.join(__dirname, '..', 'tmp', 'latestImageId.txt');
-    if (!fs.existsSync(latestIdPath)) {
-        fs.writeFileSync(latestIdPath, '0');
-    }
-
-    // Step 2: Determine the Next Image ID
-    let latestId = parseInt(fs.readFileSync(latestIdPath, 'utf8'), 10);
-    const imagesJsonPath = path.join(__dirname, '..', 'tmp', 'images.json');
-    if (fs.existsSync(imagesJsonPath)) {
-        const imagesData = JSON.parse(fs.readFileSync(imagesJsonPath, 'utf8'));
-        if (imagesData.length > 0) {
-            const maxId = imagesData.reduce((max, img) => Math.max(max, img.id), 0);
-            latestId = maxId + 1;
-        }
-    }
-
+    // Create the new image data
     let image_data = {
-        id: latestId,
+        id: ID(),
         image_name: name,
         date: creation_date,
         uploaded_by: uploaderUserId
@@ -103,9 +114,6 @@ async function saveFile(filename, oldPath, newPath, uploaderUserId) {
 
         // Write back to images.json
         fs.writeFileSync(imagesJsonPath, JSON.stringify(imagesData, null, 2), 'utf8');
-
-        // Step 4: Update latestImageId.txt
-        fs.writeFileSync(latestIdPath, latestId.toString());
     };
 
     return moveItem().then(() => { return image_data });
@@ -115,8 +123,7 @@ async function getImage(id) {
     // read images.json file
     // return the data accordingly
     // error handling if file doesn't exist
-    const imagesJsonPath = path.join(__dirname, '..', 'tmp', 'images.json');
-    id = parseInt(id, 10);  // convert id to integer
+    ;
 
     if (!fs.existsSync(imagesJsonPath)) {
         // return according error message if file doesn't exist
@@ -126,7 +133,7 @@ async function getImage(id) {
     const images = JSON.parse(fs.readFileSync(imagesJsonPath, 'utf8'));
     // filter images based on id
     const image = images.find(image => image.id === id);
-    console.log(image);
+    // console.log(image);
     if (!image) {
         return { status: 404, message: 'No image found'};
     }
@@ -137,7 +144,7 @@ async function getImagesOfUserWithId(userId) {
     // read images.json file
     // return the data accordingly
     // error handling if file doesn't exist
-    const imagesJsonPath = path.join(__dirname, '..', 'tmp', 'images.json');
+    ;
     userId = parseInt(userId, 10);  // convert userId to integer
 
     if (!fs.existsSync(imagesJsonPath)) {
@@ -149,26 +156,4 @@ async function getImagesOfUserWithId(userId) {
     // filter images based on uploaded_by
     const imagesOfUser = images.filter(image => image.uploaded_by === userId);
     return imagesOfUser;
-}
-
-async function saveImageList(imagList) {
-    // save the images that are selected by the user
-    // compare with the images.json file by id and save the images in selectedImages.json
-    // return the data accordingly
-    // error handling if file doesn't exist
-    const selectedImagesJsonPath = path.join(__dirname, '..', 'tmp', 'selectedImages.json');
-    if (!fs.existsSync(selectedImagesJsonPath)) {
-        fs.writeFileSync(selectedImagesJsonPath, JSON.stringify([], null, 2));
-    }
-
-    // const selectedImages = JSON.parse(fs.readFileSync(selectedImagesJsonPath, 'utf8'));
-    // const imagesJsonPath = path.join(__dirname, '..', 'images.json');
-    // const images = JSON.parse(fs.readFileSync(imagesJsonPath, 'utf8'));
-
-    // const selectedImageIds = imagList.map(image => image.id);
-    // const selectedImagesData = images.filter(image => selectedImageIds.includes(image.id));
-
-    // selectedImages.push(...selectedImagesData);
-    // fs.writeFileSync(selectedImagesJsonPath, JSON.stringify(selectedImages, null, 2), 'utf8');
-    // return selectedImagesData;
 }
