@@ -45,6 +45,35 @@ router.get("/search", function (req, res, next) {
     });
 });
 
+// api endpoint to save the images that are selected by the user
+// the user will send a raw body json with the image ids
+router.post("/saveSelected", function (req, res, next) {
+    const usertoken = req.headers.authorization;
+    const token = usertoken.split(' ');
+    jwt.verify(token[1], config.secret, (err, decoded) => {
+        if (err) return next(err); // Pass errors to the next middleware
+        imageService.saveSelectedImages(decoded.sub, req.body)
+            .then(data => {
+                res.json(data)
+            })
+            .catch(next); // Pass any errors to the next middleware
+    });
+});
+
+// api endpoint to get the images that are selected by the user
+router.get("/getSelected", function (req, res, next) {
+    const usertoken = req.headers.authorization;
+    const token = usertoken.split(' ');
+    jwt.verify(token[1], config.secret, (err, decoded) => {
+        if (err) return next(err); // Pass errors to the next middleware
+        imageService.getSelectedImages(decoded.sub)
+            .then(data => {
+                res.json(data)
+            })
+            .catch(next); // Pass any errors to the next middleware
+    });
+});
+
 router.get("/:imageId", function (req, res, next) {
     let imageId = req.params.imageId;
 
@@ -72,20 +101,3 @@ router.get("/:imageId", function (req, res, next) {
         })
         .catch(err => res.status(400).json({ message : err }));
 });
-
-// api endpoint to save the images that are selected by the user
-// router.post("/save", function (req, res, next) {
-//     const usertoken = req.headers.authorization;
-//     const token = usertoken.split(' ');
-//     jwt.verify(token[1], config.secret, (err, decoded) => {
-//         if (err) return next(err); // Pass errors to the next middleware
-//         console.log(decoded);
-//         imgList = req.body;
-//         imageService.saveImageList(imgList)
-//             .then(data => res.json(data))
-//             .catch(next); // Pass any errors to the next middleware
-//         // imageService.saveImageList(decoded.sub, req.body)
-//         //     .then(data => res.json(data))
-//         //     .catch(next); // Pass any errors to the next middleware
-//     });
-// });

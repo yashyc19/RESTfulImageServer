@@ -4,12 +4,15 @@ const mv = promisify(fs.rename);
 const path = require('path')
 var dir = './uploaded/';
 const imagesJsonPath = path.join(__dirname, '..', 'tmp', 'images.json');
+const selectedImagesJsonPath = path.join(__dirname, '..', 'tmp', 'selectedImages.json');
 
 module.exports = {
     uploadImage,
     getImage,
     getAll,
-    getImagesOfUserWithId
+    getImagesOfUserWithId,
+    saveSelectedImages,
+    getSelectedImages
 };
 
 var ID = function () {
@@ -156,4 +159,36 @@ async function getImagesOfUserWithId(userId) {
     // filter images based on uploaded_by
     const imagesOfUser = images.filter(image => image.uploaded_by === userId);
     return imagesOfUser;
+}
+
+async function saveSelectedImages(userId, body) {
+    // save the selected images in the selectedImages.json file by overwriting the file
+    // return the data accordingly
+    // error handling if file doesn't exist
+
+    // Initialize selectedImages.json if it doesn't exist
+    if (!fs.existsSync(selectedImagesJsonPath)) {
+        fs.writeFileSync(selectedImagesJsonPath, JSON.stringify([], null, 2));
+    }
+
+    // Overwrite selectedImages.json with new data
+    fs.writeFileSync(selectedImagesJsonPath, JSON.stringify(body, null, 2), 'utf8');
+
+    // Read selectedImages.json
+    const selectedImagesData = JSON.parse(fs.readFileSync(selectedImagesJsonPath, 'utf8'));
+    return selectedImagesData;
+}
+
+async function getSelectedImages() {
+    // read selectedImages.json file
+    // return the data accordingly
+    // error handling if file doesn't exist
+    // return the data accordingly
+    // error handling if file doesn't exist
+    if (!fs.existsSync(selectedImagesJsonPath)) {
+        return { status: 404, message: 'No selected images found' };
+    }
+
+    const selectedImages = JSON.parse(fs.readFileSync(selectedImagesJsonPath, 'utf8'));
+    return selectedImages;
 }
