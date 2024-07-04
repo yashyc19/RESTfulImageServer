@@ -130,8 +130,8 @@ dist
 .pnp.*
 
 # MISC
-uploaded/
-tmp/
+uploaded/*
+tmp/*
 users.json
 latestImageId.txt
 images.json
