@@ -1,0 +1,17 @@
+# For the freelance project of image server service
+
+version: '3'  # Specifies the version of the Docker Compose file format
+
+services:  # Defines the services (containers) that make up your application
+
+  frontend:  # The name of the first service
+    build: D:\HAKUNAMATATA\PhotoFolio  # Specifies the build context for the frontend service. It's recommended to use relative paths.
+    ports:
+      - "5500:5500"  # Maps port 5500 on the host to port 5500 in the container, allowing access to the frontend service.
+    depends_on:
+      - api  # Specifies that the frontend service depends on the api service. Ensures api starts before frontend.
+
+  api:  # The name of the second service
+    build: D:\HAKUNAMATATA\image-server-REST  # Specifies the build context for the api service. Use relative paths for portability.
+    ports:
+      - "5000:5000"  # Maps port 5000 on the host to port 5000 in the container, allowing access to the API service.
